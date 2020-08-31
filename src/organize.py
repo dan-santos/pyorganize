@@ -1,4 +1,5 @@
 import os
+import platform
 
 
 class Extensions:
@@ -56,15 +57,31 @@ class Organize:
         try:
             amount_files = len(next(os.walk(directory))[2])  # 0 = path, 1 = dirs, 2 = files
             if amount_files == 0:
-                print('---> The "{}" folder has no files to organize.'.format(directory))
-                exit()
-            print('---> Checking files in folder "{}"... DONE!'.format(directory))
-        except:
-            print('---> Unexpected error when looking for the folder "{}".\n'
+                raise ValueError
+            else:
+                print('---> Checking files in folder "{}"... DONE!'.format(directory))
+        except (FileNotFoundError, StopIteration):
+            print('---> The folder "{}" has not found.\n'
+                  '---> The program execution was interrupted.'.format(directory))
+            exit()
+        except ValueError:
+            print('---> The folder "{}" has no files to organize.\n'
+                  '---> The program execution was interrupted.'.format(directory))
+            exit()
+        except Exception:
+            print('---> Unexpected error when looking for folder "{}" and his files.\n'
                   '---> The program execution was interrupted.'.format(directory))
             exit()
 
+    def folder_name_formatter(self, folder):
+        if ' ' in folder:
+            os = platform.system() # Returns the system/OS name, such as 'Linux', 'Darwin' (Mac), 'Java', 'Windows'
+            if os == 'Windows':
+                return '\"{}\"'.format(folder)
+        return folder
+
     def organize(self, directory):
+        directory = self.folder_name_formatter(directory)
         self.verify_files_amount(directory)
         file_names = self.get_file_names(directory)
         self.create_folders(directory)
@@ -76,9 +93,11 @@ class Organize:
                 right_folder = self.get_right_folder(extension)
                 self.move_file(directory, right_folder, file)
 
-        return '---> Done! The "{}" folder now has all your {} files organized!'.format(directory, len(file_names))
+        number_files = len(file_names) - len(Extensions.extensions_dict)
+        return '---> Done! The "{}" folder now has all your {} files organized!'.format(directory, number_files)
+
 
 if __name__ == '__main__':
-    target_directory = str(input('Enter the folder name of that directory you want to organize: '))
+    target_directory = str(input('Enter the folder name of that directory you want to organize: \n'))
     make = Organize()
     print(make.organize(target_directory))
